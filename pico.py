@@ -52,5 +52,3 @@ while True:
 		data = format_data(dttm, cps)
 		print(data)
 		timeup = False
-
-	if 
