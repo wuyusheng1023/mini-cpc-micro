@@ -17,6 +17,54 @@ const urlDisconnect = `http://${hostname}:${port}/disconnect`;
 const urlRealTime = `http://${hostname}:${port}/realtime`;
 const urlHistory = `http://${hostname}:${port}/history`;
 
+const apiGet = (
+  url,
+  processor=v=>{console.log(v); return v},
+  errorHandler=console.error,
+) => {
+  const d = new Date();
+  fetch(url)
+    .then(res => res.json())
+    .then(processor)
+    .then((res) => console.log(d.toISOString(), 'Get data from API:', res))
+    .catch(errorHandler);
+};
+
+const apiPost = (url, data) => {
+  const d = new Date();
+  console.log(d.toISOString(), 'Post data to API:', data);
+  fetch(url, {
+    method: "POST",
+    headers: {
+      'Accept': 'application/json, text/plain',
+      'Content-Type': 'application/json; charset=UTF-8',
+      // 'X-CSRFToken': csrftoken
+    },
+    body: JSON.stringify(data)
+  })
+    .then(res => res.json())
+    // .then(res => console.log(d.toISOString(), 'Post response from API:', res))
+    .catch(console.error);
+};
+
+const useInterval = (callback, delay) => {
+  const savedCallback = useRef();
+  // Remember the latest callback.
+  useEffect(() => {
+    savedCallback.current = callback;
+  });
+  // Set up the interval.
+  useEffect(() => {
+    function tick() {
+      savedCallback.current();
+    }
+    if (delay !== null) {
+      let id = setInterval(tick, delay);
+      return () => clearInterval(id);
+    }
+  }, [delay]);
+};
+
 fetch(urlDisconnect);
 
 
@@ -27,54 +75,6 @@ function App() {
   const [serPortWork, setSerPortWork] = useState('');
   const [serOpen, setSerOpen] = useState(false);
 
-  const apiGet = (
-    url,
-    processor=v=>{console.log(v); return v},
-    errorHandler=console.error,
-  ) => {
-    const d = new Date();
-    fetch(url)
-      .then(res => res.json())
-      .then(processor)
-      // .then((res) => console.log(d.toISOString(), 'Get data from API:', res))
-      .catch(errorHandler);
-  };
-
-  const apiPost = (url, data) => {
-    const d = new Date();
-    console.log(d.toISOString(), 'Post data to API:', data);
-    fetch(url, {
-      method: "POST",
-      headers: {
-        'Accept': 'application/json, text/plain',
-        'Content-Type': 'application/json; charset=UTF-8',
-        // 'X-CSRFToken': csrftoken
-      },
-      body: JSON.stringify(data)
-    })
-      .then(res => res.json())
-      // .then(res => console.log(d.toISOString(), 'Post response from API:', res))
-      .catch(console.error);
-  };
-
-  const useInterval = (callback, delay) => {
-    const savedCallback = useRef();
-    // Remember the latest callback.
-    useEffect(() => {
-      savedCallback.current = callback;
-    });
-    // Set up the interval.
-    useEffect(() => {
-      function tick() {
-        savedCallback.current();
-      }
-      if (delay !== null) {
-        let id = setInterval(tick, delay);
-        return () => clearInterval(id);
-      }
-    }, [delay]);
-  };
-
   const realTimeProcessor = v => {
     const message = v['Message'];
     if (message) {
@@ -82,9 +82,9 @@ function App() {
     } else {
     const serIsOpen = v['SerOpen'];
       if (serIsOpen) {
-        setSerOpen(true);
+        // setSerOpen(true);
         setSerPortWork(v['SerName']);
-        console.log(v);
+        // console.log(v);
       } else {
         setSerOpen(false);
       };
@@ -123,7 +123,21 @@ function App() {
   const disconnect = () => {
     apiGet(urlDisconnect);
   };
-  
+
+  const historyProcessor = v => {
+    setSerOpen(true);
+    return v;
+  };
+
+  const downloadHistory = () => {
+    setSerOpen(false);
+    apiGet(urlHistory, historyProcessor);
+  };
+
+  useEffect(() => {
+    getPorts();
+  }, []);
+
   useInterval(() => {
     apiGet(urlRealTime, realTimeProcessor)
   }, serOpen ? 450 : null);
@@ -131,7 +145,7 @@ function App() {
   return (
     <div className="App">
       <Row style={{ marginTop: 20}}>
-        <Col style={{ margin: 10}} span={24}>
+        <Col style={{ margin: 10}} span={10}>
           <Row style={{ margin: 10}}>
             <Button style={{ marginRight: 10}} onClick={getPorts}>Get Ports</Button>
             <Button style={{ marginLeft: 10}} onClick={comfirmPort}>Comfirm</Button>
@@ -151,6 +165,11 @@ function App() {
           </Row>
           <Row style={{ margin: 10}}>
             { serOpen ? `${serPortWork} Opened` : 'USB Serial Closed'}
+          </Row>
+        </Col>
+        <Col style={{ margin: 10}} span={10}>
+          <Row style={{ margin: 10}}>
+            <Button style={{ marginRight: 10}} onClick={downloadHistory}>Download History</Button>
           </Row>
         </Col>
       </Row>

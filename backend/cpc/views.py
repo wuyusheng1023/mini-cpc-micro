@@ -1,7 +1,10 @@
 import sys
 import glob
+import time
 import json
+
 import serial
+from serial.serialutil import SerialException
 
 from django.http import JsonResponse
 from django.views import View
@@ -79,9 +82,9 @@ class RealTime(View):
 	def get(self, request):
 		try:
 			if ser.is_open:
-				line = ser.readline().decode('ascii').strip('\n')
+				line = ser.readline().decode('ascii')
 				if line.startswith('--'):
-					cpc = line;
+					cpc = line.strip('\r\n').strip('--;');
 				data = {
 					'SerOpen': True,
 					'SerName': ser.name,
@@ -96,4 +99,27 @@ class RealTime(View):
 
 class History(View):
 	def get(self, request):
-		pass
+		data = []
+		try:
+			if ser.is_open:
+				ser.write(b'G')
+				time.sleep(1.005)
+				
+				while ser.readline().decode('ascii').startswith('--'):
+					pass
+				while True:
+					line = ser.readline().decode('ascii').strip('\r\n')
+					if line.startswith('--'):
+						break
+					elif line.startswith('2021-01'):
+						print(line)
+						data.append(line)
+				return JsonResponse({'data': data})
+			else:
+				return JsonResponse({'SerOpen': False})
+		except SerialException as e:
+			if data:
+				return JsonResponse({'data': data})
+			return JsonResponse({'Message': 'Get history data fail'})
+		except:
+			return JsonResponse({'Message': 'Get history data fail'})
