@@ -14,13 +14,16 @@ function App() {
   const hostname = "localhost";
   const port = "8000"
   const urlPort = `http://${hostname}:${port}/port`;
+  const urlConnect = `http://${hostname}:${port}/connect`;
+  const urlDisconnect = `http://${hostname}:${port}/disconnect`;
 
   const [ports, setPorts] = useState([]);
+  const [serPort, setSerPort] = useState();
 
   const apiGet = (
     url,
-    processor=f=>f,
-    errorHandler=console.error
+    processor=v=>{console.log(v); return v},
+    errorHandler=console.error,
   ) => {
     const d = new Date();
     fetch(url)
@@ -30,7 +33,7 @@ function App() {
       .catch(errorHandler);
   };
 
-  const apiPost = (data, url) => {
+  const apiPost = (url, data) => {
     const d = new Date();
     console.log(d.toISOString(), 'Post data to API:', data);
     fetch(url, {
@@ -43,12 +46,12 @@ function App() {
       body: JSON.stringify(data)
     })
       .then(res => res.json())
-      .then((res) => console.log(d.toISOString(), 'Post response from API:', res))
+      .then(res => console.log(d.toISOString(), 'Post response from API:', res))
       .catch(console.error);
   };
 
   const getPortsProcessor = v => {
-    console.log(v);
+    // console.log(v);
     setPorts(v);
     return v;
   };
@@ -57,8 +60,21 @@ function App() {
     apiGet(urlPort, getPortsProcessor);
   };
 
-  const onSelectPort = v => {
-    console.log(v);
+  const selectPort = v => {
+    // console.log(v);
+    setSerPort(v);
+  };
+
+  const comfirmPort = () => {
+    apiPost(urlPort, {'port': serPort});
+  };
+
+  const connect = () => {
+    apiGet(urlConnect);
+  };
+  
+  const disconnect = () => {
+    apiGet(urlDisconnect);
   };
 
   return (
@@ -66,18 +82,21 @@ function App() {
       <Row style={{ marginTop: 20}}>
         <Col style={{ margin: 10}} span={24}>
           <Row style={{ margin: 10}}>
-            <Button onClick={getPorts}>
-              Get Ports
-            </Button>
+            <Button style={{ marginRight: 10}} onClick={getPorts}>Get Ports</Button>
+            <Button style={{ marginLeft: 10}} onClick={comfirmPort}>Comfirm</Button>
           </Row>
           <Row style={{ margin: 10}}>
             <Select
               style={{ width: 300 }}
               placeholder='Port'
-              onSelect={onSelectPort}
+              onSelect={selectPort}
             >
               { ports.map((v, i) => <Option key={i} value={v}>{v}</Option>)}
             </Select>
+          </Row>
+          <Row style={{ margin: 10}}>
+            <Button style={{ marginRight: 10}} onClick={connect}>Connect</Button>
+            <Button style={{ marginLeft: 10}} onClick={disconnect}>Disonnect</Button>
           </Row>
         </Col>
       </Row>

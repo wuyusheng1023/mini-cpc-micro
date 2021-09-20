@@ -11,9 +11,6 @@ baudrate = 115200
 timeout = 10
 ser = serial.Serial()
 
-# ser.port(port)
-# ser.baudrate(baudrate)
-# ser.timeout(timeout)
 
 def serial_ports():
     """ Lists serial port names
@@ -52,18 +49,30 @@ class Port(View):
 
 	def post(self, request):
 		global port
-		port = request.POST['port']
+		port = json.loads(request.body)['port']
+		print(port)
 		return JsonResponse({'port': port})
 
 
 class Connect(View):
 	def get(self, request):
-		pass
+		try:
+			ser.port = port
+			ser.baudrate = baudrate
+			ser.timeout = timeout
+			ser.open()
+			return JsonResponse({'Message': 'Serial opened'})
+		except:
+			return JsonResponse({'Message': 'Serial open fail'})
 
 
 class Disonnect(View):
 	def get(self, request):
-		pass
+		try:
+			ser.close()
+			return JsonResponse({'Message': 'Serial closed'})
+		except:
+			return JsonResponse({'Message': 'Serial close fail'})
 
 
 class RealTime(View):
