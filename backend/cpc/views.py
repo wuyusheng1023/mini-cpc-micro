@@ -77,8 +77,17 @@ class Disonnect(View):
 
 class RealTime(View):
 	def get(self, request):
-		data = {'SerOpen': ser.is_open}
-		return JsonResponse(data)
+		try:
+			if ser.is_open:
+				data = {
+					'SerOpen': True,
+					'SerName': ser.name,
+				}
+				return JsonResponse(data)
+			else:
+				return JsonResponse({'SerOpen': False})
+		except:
+			return JsonResponse({'Message': 'Get real time data fail'})
 
 
 class History(View):

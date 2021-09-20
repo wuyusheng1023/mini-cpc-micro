@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import 'antd/dist/antd.css';
 import Row from 'antd/lib/row';
@@ -20,9 +20,10 @@ function App() {
   const urlHistory = `http://${hostname}:${port}/history`;
 
   const [ports, setPorts] = useState([]);
-  const [serPortSel, setSerPortSel] = useState();
-  const [serPortWork, setSerPortWork] = useState();
+  const [serPortSel, setSerPortSel] = useState('');
+  const [serPortWork, setSerPortWork] = useState('');
   const [serOpen, setSerOpen] = useState(false);
+  const [running, setRunning] = useState(false);
 
   const apiGet = (
     url,
@@ -53,6 +54,34 @@ function App() {
       .then(res => console.log(d.toISOString(), 'Post response from API:', res))
       .catch(console.error);
   };
+
+  const useInterval = (callback, delay) => {
+    const savedCallback = useRef();
+    // Remember the latest callback.
+    useEffect(() => {
+      savedCallback.current = callback;
+    });
+    // Set up the interval.
+    useEffect(() => {
+      function tick() {
+        savedCallback.current();
+      }
+      if (delay !== null) {
+        let id = setInterval(tick, delay);
+        return () => clearInterval(id);
+      }
+    }, [delay]);
+  };
+
+  const realTimeProcessor = v => {
+    setSerOpen(v['SerOpen']);
+    setSerPortWork(v['SerName']);
+    return v;
+  };
+
+  useInterval(() => {
+    apiGet(urlRealTime, realTimeProcessor)
+  }, 300);
 
   const getPortsProcessor = v => {
     // console.log(v);
