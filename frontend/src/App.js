@@ -16,9 +16,13 @@ function App() {
   const urlPort = `http://${hostname}:${port}/port`;
   const urlConnect = `http://${hostname}:${port}/connect`;
   const urlDisconnect = `http://${hostname}:${port}/disconnect`;
+  const urlRealTime = `http://${hostname}:${port}/realtime`;
+  const urlHistory = `http://${hostname}:${port}/history`;
 
   const [ports, setPorts] = useState([]);
-  const [serPort, setSerPort] = useState();
+  const [serPortSel, setSerPortSel] = useState();
+  const [serPortWork, setSerPortWork] = useState();
+  const [serOpen, setSerOpen] = useState(false);
 
   const apiGet = (
     url,
@@ -62,11 +66,15 @@ function App() {
 
   const selectPort = v => {
     // console.log(v);
-    setSerPort(v);
+    setSerPortSel(v);
   };
 
   const comfirmPort = () => {
-    apiPost(urlPort, {'port': serPort});
+    if (serPortSel) {
+      apiPost(urlPort, {'port': serPortSel});
+    } else {
+      alert('Get Ports and Select One!');
+    };
   };
 
   const connect = () => {
@@ -98,10 +106,13 @@ function App() {
             <Button style={{ marginRight: 10}} onClick={connect}>Connect</Button>
             <Button style={{ marginLeft: 10}} onClick={disconnect}>Disonnect</Button>
           </Row>
+          <Row style={{ margin: 10}}>
+            { serOpen ? `${serPortWork} Opened` : 'USB Serial Closed'}
+          </Row>
         </Col>
       </Row>
     </div>
   );
-}
+};
 
 export default App;

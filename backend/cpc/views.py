@@ -77,7 +77,8 @@ class Disonnect(View):
 
 class RealTime(View):
 	def get(self, request):
-		pass
+		data = {'SerOpen': ser.is_open}
+		return JsonResponse(data)
 
 
 class History(View):
