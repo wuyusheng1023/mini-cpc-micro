@@ -6,6 +6,8 @@ import Col from 'antd/lib/col';
 import Button from 'antd/lib/button';
 import Select from 'antd/lib/select';
 
+const { Option } = Select;
+
 
 function App() {
 
@@ -13,7 +15,7 @@ function App() {
   const port = "8000"
   const urlPort = `http://${hostname}:${port}/port`;
 
-  const [ports, setPorts] = useState();
+  const [ports, setPorts] = useState([]);
 
   const apiGet = (
     url,
@@ -47,12 +49,16 @@ function App() {
 
   const getPortsProcessor = v => {
     console.log(v);
+    setPorts(v);
     return v;
   };
 
   const getPorts = () => {
     apiGet(urlPort, getPortsProcessor);
-    // setPorts(['a', 'b']);
+  };
+
+  const onSelectPort = v => {
+    console.log(v);
   };
 
   return (
@@ -63,6 +69,15 @@ function App() {
             <Button onClick={getPorts}>
               Get Ports
             </Button>
+          </Row>
+          <Row style={{ margin: 10}}>
+            <Select
+              style={{ width: 300 }}
+              placeholder='Port'
+              onSelect={onSelectPort}
+            >
+              { ports.map((v, i) => <Option key={i} value={v}>{v}</Option>)}
+            </Select>
           </Row>
         </Col>
       </Row>
