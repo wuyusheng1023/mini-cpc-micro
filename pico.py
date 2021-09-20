@@ -1,10 +1,32 @@
 import os
 import time
+from select import select
+from sys import stdin
 from machine import Pin
-import _thread
+# import _thread
 
 ##################################################
 # helper functions
+def get_buffer_data():
+	ch, buffer = '', ''
+	while stdin in select([stdin], [], [], 0)[0]:
+		ch = stdin.read(1)
+		buffer = buffer + ch
+	if 'G' in buffer:
+		return 'G'
+
+def print_file_data():
+	files = [f for f in os.listdir() if f.endswith('.txt')]
+	for file in files:
+		f = open(file)
+		while True:
+			time.sleep(0.001)
+			line = f.readline()
+			if line != '':
+				print(line)
+			else:
+				break
+
 def get_filename():
 	dttm = time.localtime(time.time())
 	year = dttm[0]
@@ -25,8 +47,21 @@ def format_data(dttm, cps):
 
 
 ##################################################
+# send data
+# def send_data():
+# 	while True:
+# 		time.sleep(1)
+# 		buffer = get_buffer_data()
+# 		if buffer == 'G':
+# 			print("get serial G")
+
+# _thread.start_new_thread(send_data, ())
+
+
+##################################################
 # init
 test = True
+# test = False
 if test:
 	p_test_pulse = Pin(21, Pin.OUT, Pin.PULL_UP)
 
@@ -35,6 +70,7 @@ print('Start...')
 n_file = 5
 counts = 0
 print_data = True
+# print_data = False
 t0 = time.ticks_us()
 day0 = time.time() // (60 * 1440)
 p_count = Pin(22, Pin.IN)
@@ -79,6 +115,10 @@ while True:
 		file.write(data + "\n")
 		file.flush()
 		timeup = False
+
+		buffer = get_buffer_data()
+		if buffer == 'G':
+			print_file_data()
 
 	day1 = time.time() // (60 * 1440)
 	if day1 > day0:
