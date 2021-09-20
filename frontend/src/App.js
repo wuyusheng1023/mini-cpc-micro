@@ -6,24 +6,26 @@ import Col from 'antd/lib/col';
 import Button from 'antd/lib/button';
 import Select from 'antd/lib/select';
 
+
 const { Option } = Select;
+
+const hostname = "localhost";
+const port = "8000"
+const urlPort = `http://${hostname}:${port}/port`;
+const urlConnect = `http://${hostname}:${port}/connect`;
+const urlDisconnect = `http://${hostname}:${port}/disconnect`;
+const urlRealTime = `http://${hostname}:${port}/realtime`;
+const urlHistory = `http://${hostname}:${port}/history`;
+
+fetch(urlDisconnect);
 
 
 function App() {
-
-  const hostname = "localhost";
-  const port = "8000"
-  const urlPort = `http://${hostname}:${port}/port`;
-  const urlConnect = `http://${hostname}:${port}/connect`;
-  const urlDisconnect = `http://${hostname}:${port}/disconnect`;
-  const urlRealTime = `http://${hostname}:${port}/realtime`;
-  const urlHistory = `http://${hostname}:${port}/history`;
 
   const [ports, setPorts] = useState([]);
   const [serPortSel, setSerPortSel] = useState('');
   const [serPortWork, setSerPortWork] = useState('');
   const [serOpen, setSerOpen] = useState(false);
-  const [running, setRunning] = useState(false);
 
   const apiGet = (
     url,
@@ -34,7 +36,7 @@ function App() {
     fetch(url)
       .then(res => res.json())
       .then(processor)
-      .then((res) => console.log(d.toISOString(), 'Get data from API:', res))
+      // .then((res) => console.log(d.toISOString(), 'Get data from API:', res))
       .catch(errorHandler);
   };
 
@@ -51,7 +53,7 @@ function App() {
       body: JSON.stringify(data)
     })
       .then(res => res.json())
-      .then(res => console.log(d.toISOString(), 'Post response from API:', res))
+      // .then(res => console.log(d.toISOString(), 'Post response from API:', res))
       .catch(console.error);
   };
 
@@ -74,14 +76,21 @@ function App() {
   };
 
   const realTimeProcessor = v => {
-    setSerOpen(v['SerOpen']);
-    setSerPortWork(v['SerName']);
+    const message = v['Message'];
+    if (message) {
+      return v;
+    } else {
+    const serIsOpen = v['SerOpen'];
+      if (serIsOpen) {
+        setSerOpen(true);
+        setSerPortWork(v['SerName']);
+        console.log(v);
+      } else {
+        setSerOpen(false);
+      };
+    };
     return v;
   };
-
-  useInterval(() => {
-    apiGet(urlRealTime, realTimeProcessor)
-  }, 300);
 
   const getPortsProcessor = v => {
     // console.log(v);
@@ -108,11 +117,16 @@ function App() {
 
   const connect = () => {
     apiGet(urlConnect);
+    setSerOpen(true);
   };
   
   const disconnect = () => {
     apiGet(urlDisconnect);
   };
+  
+  useInterval(() => {
+    apiGet(urlRealTime, realTimeProcessor)
+  }, serOpen ? 450 : null);
 
   return (
     <div className="App">

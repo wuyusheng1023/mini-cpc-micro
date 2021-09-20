@@ -8,7 +8,7 @@ from django.views import View
 
 port = ''
 baudrate = 115200
-timeout = 10
+timeout = 0.1
 ser = serial.Serial()
 
 
@@ -79,9 +79,13 @@ class RealTime(View):
 	def get(self, request):
 		try:
 			if ser.is_open:
+				line = ser.readline().decode('ascii').strip('\n')
+				if line.startswith('--'):
+					cpc = line;
 				data = {
 					'SerOpen': True,
 					'SerName': ser.name,
+					'CPC': cpc,
 				}
 				return JsonResponse(data)
 			else:
